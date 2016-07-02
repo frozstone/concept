@@ -27,18 +27,18 @@ class Query:
 
     def __constructSolrQuery_words_verbose(self, query_element):
         #construct keyword query
-        terms_word = []
-        qkeyword = query_element['keyword']
-        terms_word.extend(qkeyword.strip().split(' '))
-
-        terms_word          = ' OR '.join(terms_word)
+        terms_word          = ' OR '.join('"%s"' % term for term in query_element["keyword"])
         abstract_query      = 'abstract:(%s)' % terms_word
         body_query          = 'body:(%s)' % terms_word
         descriptions_query  = 'descriptions:(%s)' % terms_word
         keywords_query      = 'keywords:(%s)' % terms_word
         nounphrases_query   = 'nounphrases:(%s)' % terms_word
         title_query         = 'title:(%s)' % terms_word
-        return abstract_query, body_query, descriptions_query, keywords_query, nounphrases_query, title_query
+
+        term_query          = 'term:(%s)' % terms_word
+        innerlink_query     = 'innerlink:(%s)' % terms_word
+        subject_query       = 'subject:(%s)' % terms_word
+        return abstract_query, body_query, descriptions_query, keywords_query, nounphrases_query, title_query, term_query, innerlink_query, subject_query
 
     def __summarize_score_max(self, all_maths):
         return max(all_maths.values()) 
@@ -46,9 +46,9 @@ class Query:
     def askSolr_all_verbose(self, query):
         if len(query["keyword"]) == 0: return {}
         qall = Query_All(self.solr_url_math, self.n_row)
-        a, b, d, k, n, t = self.__constructSolrQuery_words_verbose(query)
+        a, b, d, k, n, t , tm, inl, subj = self.__constructSolrQuery_words_verbose(query)
 
-        queries = [a,b,d,k,n,t]
+        queries = [a,b,d,k,n,t, tm, inl, subj]
 
         qdocs = qall.ask_solr_doc_fqueries(queries)
         return qdocs

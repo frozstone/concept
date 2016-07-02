@@ -6,6 +6,7 @@ from MathReader         import MathReader
 from DepGraphProcessor  import DepGraphProcessor
 from HeurDep            import HeurDep
 from ParaReader         import ParaReader
+from SentenceParser     import SentenceParser
 from WikiPageSearcher   import WikiPageSearcher
 from WordSim            import WordSim
 
@@ -24,7 +25,7 @@ xml_dir         = "../ACL-ARC-math-20"
 ann_dir         = "../bios_long"
 solr_wiki_pmi   = "http://localhost:8983/solr/wiki.document"
 solr_wiki_math  = "http://localhost:8983/solr/mcatwiki.math"
-solr_wiki_doc   = "http://localhost:8984/solr/mcatwiki.document"
+solr_wiki_doc   = "http://localhost:8984/solr/conceptwiki.document"
 
 def set_data(math_knowledge):
     word_sim = WordSim(solr_wiki_pmi)
@@ -81,19 +82,28 @@ def print_docs_score(docs_score):
     lst_string = ["(%s, %f)" % (encode(doc), score) for doc, score in docs_score]
     return ", ".join(lst_string)
 
-def search_wiki(math_knowledge, math_map, roots, math_exp_rev, old_new_math_map):
+def search_wiki(math_knowledge, math_map, mcom_map, roots, math_exp_rev, old_new_math_map):
     ws = WikiPageSearcher(solr_wiki_math, solr_wiki_doc)
     na = norm_attribute()
     for mid, vals in math_knowledge.iteritems():
         mml = etree.tostring(math_map[mid])
         mml = na.normalize(mml)
 
-        text = vals["paragraph"]
+        mml_comp = etree.tostring(mcom_map[mid])
+        mml_comp = na.normalize(mml_comp)
+        
+        #text = vals["paragraph"]
+        text = set()
+        for nps in vals["nps"]:
+            text.update(nps)
+
         if "children" in vals:
             for v, vt in vals["children"]:
                 if vt is Link_Types.comp or vt is Link_Types.simcomp: continue
-                text = u"%s %s" % (text, math_knowledge[v]["paragraph"])
-        mathdb, docdb = ws.search_wikipedia_pages(mml, text)
+                #text = u"%s %s" % (text, math_knowledge[v]["paragraph"])
+                for nps in math_knowledge[v]["nps"]:
+                    text.update(nps)
+        mathdb, docdb = ws.search_wikipedia_pages(mml_comp, text)
         
         is_root = old_new_math_map[math_exp_rev[mid]] in roots
         is_root = str(is_root)
@@ -108,18 +118,25 @@ def maincode(fl, mode_dump):
     dep_getter  = HeurDep()
     math_reader = MathReader()
     para_reader = ParaReader(path.join(xml_dir, fl))
+    sent_parser = SentenceParser()
 
     pname = fl.split("_")[0]
 
     math_map = math_reader.read_maths(xml_dir, pname)
+    mcom_map = math_reader.read_complete_maths(xml_dir, pname)
     desc_map = ann_reader.get_paper_ann(ann_dir, pname)
     depgraph = dep_getter.get_dep_graph(math_map, Matching_Methods.heur)
     para_map = OrderedDict()
+    sent_map = OrderedDict()
+    nps_map  = OrderedDict()
     for mid, xmml in math_map.iteritems():
         infty_mid       = xmml.attrib["id"]
-        para_map[mid]   = para_reader. get_paragraph_for_math(infty_mid)
-
-    #print_dict(math_map)
+        para_text       = para_reader.get_paragraph_for_math(infty_mid)
+        para_map[mid]   = para_text
+        
+        sents, nps      = sent_parser.obtain_nps_from_sentences(para_text) 
+        sent_map[mid]   = sents
+        nps_map[mid]    = nps
 
     #Compressing/Simplifying dep graph
     dep_proc        = DepGraphProcessor(math_map, desc_map, para_map, depgraph)
@@ -140,11 +157,12 @@ def maincode(fl, mode_dump):
         math_knowledge[mid] = {}
         math_knowledge[mid]["descriptions"] = desc_map[mid] if mid in desc_map else []
         math_knowledge[mid]["paragraph"]    = para_map[mid]
+        math_knowledge[mid]["nps"]          = nps_map[mid]
         if mid in depgraph:
             math_knowledge[mid]["children"] = depgraph[mid]
 
     #FIND the wiki article related to the roots
-    search_wiki(math_knowledge, math_map, roots, math_exp_rev, old_new_math_map)
+    search_wiki(math_knowledge, math_map, mcom_map, roots, math_exp_rev, old_new_math_map)
 
     #data = set_data(math_knowledge)
     #nodes, labels, edges = data

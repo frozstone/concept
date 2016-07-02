@@ -16,5 +16,5 @@ do
 
     tsv_flname="${source_flname/_gd_output.xml/$ext}"
     echo $fl
-    python depgraph.py $source_flname 1 > $tsv_dir/$tsv_flname
+    python depgraph.py $source_flname 1 > $tsv_dir/$tsv_flname &
 done

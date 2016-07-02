@@ -224,8 +224,9 @@ class Query:
 
     def __constructSolrQuery_words(self, keywords):
         text_fields = []
+        or_terms    = ' OR '.join('"%s"' % term for term in keywords)
         for fld in ["contexts", "contexts_children", "nounphrases", "nounphrases_children", "descriptions", "descriptions_children"]:
-            text_fields.append("%s:(%s)" % (fld, keywords))
+            text_fields.append("%s:(%s)" % (fld, or_terms))
         return text_fields 
 
     def __summarize_score_max(self, all_maths):
@@ -241,25 +242,9 @@ class Query:
             terms_fields = self.__constructSolrQuery_math_pres(mathml)
             fields += list(terms_fields)
         
-        if query['text'].strip() != "":
+        if len(query["text"]) > 0: #query['text'].strip() != "":
             text_fields = self.__constructSolrQuery_words(query['text'])
             fields += text_fields
-        qmath, qdocs = qall.ask_solr_math_fqueries(fields)
+        qmath, qdocs = qall.ask_solr_math_fqueries(fields, query["mathml"])
         return qmath, qdocs
   
-    def askSolr_all_cont(self, query):
-        qall = Query_All(self.solr_url_math, self.n_row)
-
-        fields = []
-        if query["mathml"] != "":
-            mc = MathConverter()
-            mathml = mc.prefix_to_mathcontent(query['mathml'])
-            terms_fields = self.__constructSolrQuery_math_cont(etree.tostring(mathml))
-            fields += list(terms_fields)
-        
-        if query['text'].strip() != "":
-            text_fields = self.__constructSolrQuery_words(query['text'])
-            fields += text_fields
-        qmath, qdocs = qall.ask_solr_math_fqueries(fields)
-        return qmath, qdocs
-

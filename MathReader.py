@@ -37,3 +37,24 @@ class MathReader:
             math_dict[mid] = m
         return math_dict
 
+    def read_complete_maths(self, xml_dir, pname):
+        flpath = self.__get_filename(xml_dir, pname)
+
+        parser = etree.XMLParser(remove_blank_text = True)
+        xdoc  = etree.parse(flpath, parser)
+        maths = xdoc.xpath(".//*[local-name() = 'math']")
+        
+        fl_basename     = path.basename(flpath)
+        fl_basename     = fl_basename.split("_")[0]
+
+        math_dict       = OrderedDict()
+        math_local_id   = 1
+        for m in maths:
+            mid = "MATH_%s_%s" % (fl_basename, math_local_id)
+            math_local_id += 1
+
+            m.tail = ""
+            self.__strip_semantics_tag(m)
+            math_dict[mid] = m
+        return math_dict
+

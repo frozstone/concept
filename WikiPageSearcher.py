@@ -8,7 +8,7 @@ from lxml import etree
 class WikiPageSearcher:
     __solr_math_url  = None
     __solr_doc_url   = None
-    __seed_size = 10
+    __seed_size = 100
     __stops     = None
 
     def __init__(self, solr_math_url, solr_doc_url):
@@ -32,7 +32,9 @@ class WikiPageSearcher:
         """
         q = qm.Query(self.__solr_math_url, self.__seed_size)
 
-        query = {'mathml': mathml, 'text': self.__remove_stops(text)}
+        #query = {'mathml': mathml, 'text': self.__remove_stops(text)}
+        query = {'mathml': mathml, 'text': text}
+
         qmath, _ = q.askSolr_all_pres(query)
         
         topdocs = set()
@@ -48,7 +50,9 @@ class WikiPageSearcher:
     def __search_wikipedia_docdb(self, text):
         q = qd.Query(self.__solr_doc_url, self.__seed_size)
 
-        query   = {'keyword': self.__remove_stops(text)}
+        #query   = {'keyword': self.__remove_stops(text)}
+        query   = {'keyword': text}
+
         qdoc    = q.askSolr_all_verbose(query)
 
         topdocs_and_score = []
@@ -60,6 +64,7 @@ class WikiPageSearcher:
     def search_wikipedia_pages(self, mathml, text):
         """
             mathml: string
+            text: list of terms
         """
         result_mathdb = self.__search_wikipedia_mathdb(mathml, text)
         result_docdb  = self.__search_wikipedia_docdb(text)
