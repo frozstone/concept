@@ -43,7 +43,7 @@ class SentenceParser:
     def __weight_tokens(self, mid, nps, sentences, sent_id):
         st          = PorterStemmer()
         sent_target = sentences[sent_id]
-        token_id    = [idx for idx, token in enumerate(sent_target.split(" ")) if mid in token][0]
+        token_id    = [idx for idx, token in enumerate(sent_target.strip().split(" ")) if mid in token][0]
 
         sent_lengths= [len(s.split(" ")) for s in sentences]
 
@@ -55,13 +55,29 @@ class SentenceParser:
             for np_ori, np in nps_base.iteritems():
                 if np_ori not in nps_proc: nps_proc[np_ori] = {}
 
-                if "dist_sent" not in nps_proc[np_ori] or math.abs(sent_idx - sent_id) < math.abs(nps_proc[np_ori]["sent_idx"] - sent_id):
+                if "dist_sent" not in nps_proc[np_ori] or abs(sent_idx - sent_id) < nps_proc[np_ori]["dist_sent"]:
                     #always update the info
+                    if np not in sent_stem: 
+                        continue
                     np_idx      = sent_stem.rindex(np)
-                    dist_end    = len(sent_stem[np_idx+len(np):].split(" "))
+                    np_token_idx= len(sent_target[:np_idx].strip().split(" "))
+                    dist_start  = len(sent_stem[:np_idx].strip().split(" "))
+                    dist_end    = len(sent_stem[np_idx+len(np):].strip().split(" "))
 
-                    dist_sent   = math.abs(sent_idx - sent_id)
-                    dist_token  = dist_end + sum(sent_lengths[sent_idx+1:sent_id]) + token_id
+                    dist_sent   = abs(sent_idx - sent_id)
+                    dist_token  = -1
+
+                    if dist_sent == 0:
+                        if mid in np_ori:
+                            dist_token = 0
+                        elif np_token_idx < token_id:
+                            dist_token = token_id - np_token_idx - (len(np.split(" ")) - 1) - 1
+                        elif np_token_idx > token_id:
+                            dist_token = np_token_idx - token_id - 1
+                    elif sent_idx < sent_id: 
+                        dist_token = dist_end + sum(sent_lengths[sent_idx+1:sent_id]) + token_id
+                    elif sent_idx > sent_id:
+                        dist_token = (len(sent_target.strip().split(" "))-1-token_id) + sum(sent_lengths[sent_id+1:sent_idx]) + dist_start
 
                     nps_proc[np_ori]["dist_sent"]  = dist_sent
                     nps_proc[np_ori]["dist_token"] = dist_token
@@ -84,10 +100,10 @@ class SentenceParser:
 
         sent_match_id= -1
         for sent_idx, sent in enumerate(lst_sentences):
-            if sent_id != -1 and mid in sent: 
+            if sent_match_id == -1 and mid in sent: 
                 sent_match_id = sent_idx
 
-            sent_tokens, nps = self.__obtain_nps(sent))
+            sent_tokens, nps = self.__obtain_nps(sent)
             lst_sent_pr.append(sent_tokens)
             set_nps.update(nps)
 

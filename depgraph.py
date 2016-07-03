@@ -85,7 +85,7 @@ def print_docs_score(docs_score):
 def nps_aggregration(lst_dct_weighted_nps):
     agg_nps = {}
     for nps in lst_dct_weighted_nps:
-        for np, weight in nps:
+        for np, weight in nps.iteritems():
             if np not in agg_nps: agg_nps[np] = 0.0
             agg_nps[np] += weight
 

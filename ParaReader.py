@@ -12,6 +12,8 @@ class ParaReader:
         flname        = path.basename(xml_flpath)
         self.__pname  = flname.replace("_gd_output.xml", "")
         self.__xpaper = etree.parse(xml_flpath)
+
+        self.__para_map = {}
         self.__get_paragraph_for_math()
 
     def __get_xml_text(self, xelement):
@@ -41,10 +43,10 @@ class ParaReader:
             for ln in lines:
                 iids_local, start_id  = self.__symbolize_mathml(ln, start_id)
                 infty_ids.extend(iids_local)
+                if ln.text is None: continue
                 clean_lines.append(ln.text.replace("\n", ""))
-            
             para_text   = " ".join(clean_lines)
-            for m in mids:
+            for m in infty_ids:
                 self.__para_map[m] = para_text
         return True
             
