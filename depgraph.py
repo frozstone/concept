@@ -82,6 +82,16 @@ def print_docs_score(docs_score):
     lst_string = ["(%s, %f)" % (encode(doc), score) for doc, score in docs_score]
     return ", ".join(lst_string)
 
+def nps_aggregration(lst_dct_weighted_nps):
+    agg_nps = {}
+    for nps in lst_dct_weighted_nps:
+        for np, weight in nps:
+            if np not in agg_nps: agg_nps[np] = 0.0
+            agg_nps[np] += weight
+
+    agg_agv_nps = {np:sum_weight/len(lst_dct_weighted_nps) for np, sum_weight in agg_nps.iteritems()}
+    return agg_agv_nps
+
 def search_wiki(math_knowledge, math_map, mcom_map, roots, math_exp_rev, old_new_math_map):
     ws = WikiPageSearcher(solr_wiki_math, solr_wiki_doc)
     na = norm_attribute()
@@ -92,18 +102,17 @@ def search_wiki(math_knowledge, math_map, mcom_map, roots, math_exp_rev, old_new
         mml_comp = etree.tostring(mcom_map[mid])
         mml_comp = na.normalize(mml_comp)
         
-        #text = vals["paragraph"]
-        text = set()
-        for nps in vals["nps"]:
-            text.update(nps)
+        lst_dct_weighted_nps = []
+        lst_dct_weighted_nps.append(vals["nps"])
 
         if "children" in vals:
             for v, vt in vals["children"]:
                 if vt is Link_Types.comp or vt is Link_Types.simcomp: continue
                 #text = u"%s %s" % (text, math_knowledge[v]["paragraph"])
-                for nps in math_knowledge[v]["nps"]:
-                    text.update(nps)
-        mathdb, docdb = ws.search_wikipedia_pages(mml_comp, text)
+                lst_dct_weighted_nps.append(math_knowledge[v]["nps"])
+
+        agg_nps = nps_aggregration(lst_dct_weighted_nps)
+        mathdb, docdb = ws.search_wikipedia_pages(mml_comp, agg_nps)
         
         is_root = old_new_math_map[math_exp_rev[mid]] in roots
         is_root = str(is_root)
@@ -134,7 +143,7 @@ def maincode(fl, mode_dump):
         para_text       = para_reader.get_paragraph_for_math(infty_mid)
         para_map[mid]   = para_text
         
-        sents, nps      = sent_parser.obtain_nps_from_sentences(para_text) 
+        sents, nps      = sent_parser.obtain_nps_from_sentences(mid, para_text) 
         sent_map[mid]   = sents
         nps_map[mid]    = nps
 

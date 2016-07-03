@@ -64,7 +64,7 @@ class WikiPageSearcher:
     def search_wikipedia_pages(self, mathml, text):
         """
             mathml: string
-            text: list of terms
+            text: dictionary of nps and their weights
         """
         result_mathdb = self.__search_wikipedia_mathdb(mathml, text)
         result_docdb  = self.__search_wikipedia_docdb(text)

@@ -27,7 +27,7 @@ class Query:
 
     def __constructSolrQuery_words_verbose(self, query_element):
         #construct keyword query
-        terms_word          = ' OR '.join('"%s"' % term for term in query_element["keyword"])
+        terms_word          = ' OR '.join('"%s"^%s' % (term, term_weight) for term, term_weight in query_element["keyword"].iteritems())
         abstract_query      = 'abstract:(%s)' % terms_word
         body_query          = 'body:(%s)' % terms_word
         descriptions_query  = 'descriptions:(%s)' % terms_word

@@ -224,7 +224,7 @@ class Query:
 
     def __constructSolrQuery_words(self, keywords):
         text_fields = []
-        or_terms    = ' OR '.join('"%s"' % term for term in keywords)
+        or_terms    = ' OR '.join('"%s"^%s' % (term, term_weight) for term, term_weight in keywords.iteritems())
         for fld in ["contexts", "contexts_children", "nounphrases", "nounphrases_children", "descriptions", "descriptions_children"]:
             text_fields.append("%s:(%s)" % (fld, or_terms))
         return text_fields 
