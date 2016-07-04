@@ -38,7 +38,7 @@ class SentenceParser:
         return sent_tokens, nps_smallest
 
     def __gaussian_weight(self, distance, variance):
-        return math.exp(-0.5 * (distance**2 - 1)/variance)
+        return math.exp(-0.5 * (distance**2)/variance)
 
     def __weight_tokens(self, mid, nps, sentences, sent_id):
         st          = PorterStemmer()

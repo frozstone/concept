@@ -96,6 +96,7 @@ def search_wiki(math_knowledge, math_map, mcom_map, roots, math_exp_rev, old_new
     ws = WikiPageSearcher(solr_wiki_math, solr_wiki_doc)
     na = norm_attribute()
     for mid, vals in math_knowledge.iteritems():
+        #mid = "MATH_C04-1197_15"
         mml = etree.tostring(math_map[mid])
         mml = na.normalize(mml)
 
@@ -141,6 +142,8 @@ def maincode(fl, mode_dump):
     for mid, xmml in math_map.iteritems():
         infty_mid       = xmml.attrib["id"]
         para_text       = para_reader.get_paragraph_for_math(infty_mid)
+        if para_text is None:
+            para_text = mid
         para_map[mid]   = para_text
         
         sents, nps      = sent_parser.obtain_nps_from_sentences(mid, para_text) 

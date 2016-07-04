@@ -19,7 +19,7 @@ class Query_All:
         self.__unifier = UnificationACL()
 
     def __escape(self, string):
-        return re.sub(r'([+&|!(){}[\]"~*?:\\^-])', r'\\\1', string)
+        return re.sub(r'([+&|!(){}[\]"\'~*?:\\^-])', r'\\\1', string)
 
     #GENERATING A LIST OF RETR. UNIT
     
@@ -115,17 +115,17 @@ class Query_All:
         return common_query
 
     def ask_solr_math_fqueries(self, query, mt_str_query):
-        #fquery = self.__produce_fquery_wo_weight(query)
+        fquery = self.__produce_fquery_wo_weight(query)
         #fquery = self.__produce_fquery(query)
-        fquery = self.__produce_commonquery(query)
+        #fquery = self.__produce_commonquery(query)
         maths, documents = self.__ask_solr_math(fquery, mt_str_query)
         documents = sorted(documents.iteritems(), key=operator.itemgetter(1), reverse=True)[:self.n_row]
         return maths, documents
 
     def ask_solr_doc_fqueries(self, query):
-        #fquery = self.__produce_fquery_wo_weight(query)
+        fquery = self.__produce_fquery_wo_weight(query)
         #fquery = self.__produce_fquery(query)
-        fquery = self.__produce_commonquery(query)
+        #fquery = self.__produce_commonquery(query)
         documents = self.__ask_solr_docdb(fquery)
         documents = sorted(documents.iteritems(), key=operator.itemgetter(1), reverse=True)[:self.n_row]
         return documents

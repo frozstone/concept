@@ -26,7 +26,7 @@ class ParaReader:
         infty_ids = []
         for mt in element.xpath(".//*[local-name() = 'math']"):
             mid         = "MATH_%s_%s" % (self.__pname, start_id)
-            mt.tail     = "%s%s" % (mid, mt.tail)
+            mt.tail     = "%s%s" % (mid, mt.tail if mt.tail is not None else "")
 
             infty_ids.append(mt.attrib["id"])
             start_id   += 1
@@ -51,6 +51,6 @@ class ParaReader:
         return True
             
     def get_paragraph_for_math(self, math_infty_id):
-        return self.__para_map[math_infty_id]
-
+        #to handle math_052232eb in E06***
+        return self.__para_map.get(math_infty_id)
 
